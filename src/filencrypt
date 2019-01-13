@@ -1,0 +1,108 @@
+#! /bin/bash
+
+ACTION="h"
+CONTAINER=container
+SIZE_MB=10
+MOUNTPOINT=/tmp/mountpoint
+
+check_root()
+{
+	ID=$(id -u)
+	if [ $ID != 0 ]; then
+		echo "This script must be executed by root"
+		exit 1
+	fi
+}
+
+show_help()
+{
+    echo "Usage: $0 [OPTIONS]"
+    echo
+    echo "Options:"
+    echo "  -f CONTAINER"
+    echo "  -p MOUNTPOINT"
+    echo "  -s SIZE (MB)"
+	echo "  -c"
+	echo "  -m"
+	echo "  -u"
+    echo
+	echo "Examples:"
+	echo -e "\t$0 -f file -s 100 -p /tmp/mount -c"
+	echo -e "\t$0 -f file -s 100 -p /tmp/mount -m"
+	echo -e "\t$0 -f file -s 100 -p /tmp/mount -u"
+    exit 1
+}
+
+fencrypt_create()
+{
+	dd if=/dev/zero of=$CONTAINER bs=1M count=$SIZE_MB
+	cryptsetup luksFormat $CONTAINER
+	cryptsetup luksOpen $CONTAINER secret-device
+	mkfs.ext4 /dev/mapper/secret-device
+	cryptsetup luksClose secret-device
+}
+
+fencrypt_mount()
+{
+	mkdir -p $MOUNTPOINT
+	cryptsetup luksOpen $CONTAINER secret-device
+	mount /dev/mapper/secret-device $MOUNTPOINT
+	echo "You can write encrypted contents to $MOUNTPOINT"
+}
+
+fencrypt_umount()
+{
+	umount $MOUNTPOINT
+	cryptsetup luksClose secret-device
+	echo "Congrats :) Your content is now safe"
+}
+
+# Setting OPTIND=1 makes your script work when it's sourced.
+OPTIND=1
+ACTION='h'
+
+while getopts "h?f:p:s:cmu" opt; do
+    case "$opt" in
+    h|\?)
+        show_help
+        ;;
+    f)  
+        CONTAINER=$OPTARG
+        ;;
+    s)  
+        SIZE_MB=$OPTARG
+        ;;
+    p)  
+        MOUNTPOINT=$OPTARG
+        ;;
+    c)  
+		ACTION="c"
+        ;;
+    m)  
+		ACTION="m"
+        ;;
+    u)  
+		ACTION="u"
+        ;;
+
+    esac
+done
+
+check_root
+
+case $ACTION in
+	h)
+		show_help
+		;;
+	c)
+		fencrypt_create
+		;;
+	m)
+		fencrypt_mount
+		;;
+	u)
+		fencrypt_umount
+		;;
+esac
+
+
