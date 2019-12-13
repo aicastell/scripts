@@ -4,6 +4,7 @@ ACTION="h"
 CONTAINER=container
 SIZE_MB=10
 MOUNTPOINT=/tmp/mountpoint
+SECRET_DEVICE=secret-device
 
 check_root()
 {
@@ -37,23 +38,23 @@ fencrypt_create()
 {
 	dd if=/dev/zero of=$CONTAINER bs=1M count=$SIZE_MB
 	cryptsetup luksFormat $CONTAINER
-	cryptsetup luksOpen $CONTAINER secret-device
-	mkfs.ext4 /dev/mapper/secret-device
-	cryptsetup luksClose secret-device
+	cryptsetup luksOpen $CONTAINER $SECRET_DEVICE
+	mkfs.ext4 /dev/mapper/$SECRET_DEVICE
+	cryptsetup luksClose $SECRET_DEVICE
 }
 
 fencrypt_mount()
 {
 	mkdir -p $MOUNTPOINT
-	cryptsetup luksOpen $CONTAINER secret-device
-	mount /dev/mapper/secret-device $MOUNTPOINT
+	cryptsetup luksOpen $CONTAINER $SECRET_DEVICE
+	mount /dev/mapper/$SECRET_DEVICE $MOUNTPOINT
 	echo "You can write encrypted contents to $MOUNTPOINT"
 }
 
 fencrypt_umount()
 {
 	umount $MOUNTPOINT
-	cryptsetup luksClose secret-device
+	cryptsetup luksClose $SECRET_DEVICE
 	echo "Congrats :) Your content is now safe"
 }
 
@@ -84,11 +85,11 @@ while getopts "h?f:p:s:cmu" opt; do
     u)  
 		ACTION="u"
         ;;
-
     esac
 done
 
 check_root
+SECRET_DEVICE=$(basename $CONTAINER)
 
 case $ACTION in
 	h)
