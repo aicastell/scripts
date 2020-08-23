@@ -1,0 +1,44 @@
+#! /bin/bash
+#
+# Decrypt with the private key
+
+if [[ ! $PRIV_KEY ]]; then
+    echo "Define a PRIV_KEY environ variable pointing to your private key"
+    exit 1
+fi
+
+# We need some file to decrypt
+if [ $# != 1 ]
+then
+    echo "ENCRYPTED file expected"
+    exit 1
+fi
+
+ENCRYPTED=$1
+
+# Check the filename existence
+if [ ! -f $ENCRYPTED ]
+then
+    echo "File $ENCRYPTED not found"
+    exit 1
+fi
+
+# Check the mime type
+MIME_TYPE=$(file -i $ENCRYPTED | awk '{ print $2} ')
+
+if [ "$MIME_TYPE" != "application/octet-stream;" ]; then
+    echo "Not an encrypted file"
+    exit 1
+fi
+
+# Make the decryption magic
+PLAINTEXT=$(echo $ENCRYPTED | sed "s/.encrypt//")
+openssl rsautl -decrypt -in $ENCRYPTED -out $PLAINTEXT -inkey $PRIV_KEY
+if [ $? -ne 0 ]; then
+    echo "$0: Error making decryption magic"
+    exit 1
+fi
+
+cat $PLAINTEXT
+rm -f $PLAINTEXT
+

@@ -1,0 +1,42 @@
+#! /bin/bash
+#
+# Encrypt with the public key
+
+if [[ ! $PUB_KEY ]]; then
+    echo  "Define a PUB_KEY environ variable pointing to your public key"
+    exit 1
+fi
+
+# We need some file to encrypt
+if [ $# != 1 ]
+then
+    echo "PLAINTEXT file expected"
+    exit 1
+fi
+
+PLAINTEXT=$1
+
+# Check the filename existence
+if [ ! -f $PLAINTEXT ]
+then
+    echo "File $PLAINTEXT not found"
+    exit 1
+fi
+
+# Check the mime type
+MIME_TYPE=$(file -i $PLAINTEXT | awk '{ print $2} ')
+
+if [ "$MIME_TYPE" != "text/plain;" ]; then
+    echo "Not a plain text file"
+    exit 1
+fi
+
+# Make the encryption magic
+openssl rsautl -encrypt -in $PLAINTEXT -out $PLAINTEXT.encrypt -pubin -inkey $PUB_KEY
+if [ $? -ne 0 ]; then
+    echo "$0: Error making encryption magic"
+    exit 1
+fi
+
+rm -f $PLAINTEXT
+
