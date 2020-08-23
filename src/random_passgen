@@ -1,0 +1,15 @@
+#! /bin/sh
+
+if [ $# -ne 1 ]; then
+    echo "Please provide a valid len"
+    exit
+fi
+
+LEN=$1
+
+if test -z $(which pwgen); then
+    echo "sudo apt-get install pwgen"
+    exit
+fi
+
+/usr/bin/pwgen $LEN -1
