@@ -26,14 +26,14 @@ fi
 # Check the mime type
 MIME_TYPE=$(file -i $ENCRYPTED | awk '{ print $2} ')
 
-if [ "$MIME_TYPE" != "application/octet-stream;" ]; then
+if [ "$MIME_TYPE" != "application/octet-stream;" ] && [ "$MIME_TYPE" != "application/x-dosexec;" ]; then
     echo "Not an encrypted file"
     exit 1
 fi
 
 # Make the decryption magic
 PLAINTEXT=$(echo $ENCRYPTED | sed "s/.encrypt//")
-openssl rsautl -decrypt -in $ENCRYPTED -out $PLAINTEXT -inkey $PRIV_KEY
+openssl pkeyutl -decrypt -in $ENCRYPTED -out $PLAINTEXT -inkey $PRIV_KEY
 if [ $? -ne 0 ]; then
     echo "$0: Error making decryption magic"
     exit 1

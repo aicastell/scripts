@@ -11,7 +11,8 @@ def ripemd160(x):
     return d
 
 if len(sys.argv) != 2:
-    print("Missing public key")
+    print("Error: Provide the public key as input argument (hex format)")
+    print("Use: get_btc_address.py <private_key_hex>")
     sys.exit()
 
 public_key = bytes.fromhex(sys.argv[1])

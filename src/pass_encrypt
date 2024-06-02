@@ -32,7 +32,7 @@ if [ "$MIME_TYPE" != "text/plain;" ]; then
 fi
 
 # Make the encryption magic
-openssl rsautl -encrypt -in $PLAINTEXT -out $PLAINTEXT.encrypt -pubin -inkey $PUB_KEY
+openssl pkeyutl -encrypt -in $PLAINTEXT -out $PLAINTEXT.encrypt -pubin -inkey $PUB_KEY
 if [ $? -ne 0 ]; then
     echo "$0: Error making encryption magic"
     exit 1
