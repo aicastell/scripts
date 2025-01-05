@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Tool to synchronize the current working directory (PWD) to a remote machine using rsync.
+# Function to display usage instructions
+
+LOCAL_DIR="$(pwd)""/"
+
+if [ $# -ne 1 ]; then
+    echo "Need HOSTNAME to rsync local files"
+    exit
+else
+    REMOTE_HOSTNAME=$1
+    ping -c 1 $REMOTE_HOSTNAME > /dev/null 2>&1
+    RET=$?
+    if [ $RET -ne 0 ]; then
+        echo "Remote machine $REMOTE_HOSTNAME is offline"
+        exit
+    fi
+fi
+
+echo -ne "I will rsync all subdirectories from $LOCAL_DIR into $REMOTE_HOSTNAME. Do you agree? y/n"
+read AGREE
+
+if [ $AGREE != "y" ]; then
+    echo "Action canceled"
+    exit
+fi
+
+# Sync command using rsync
+echo "rsync -rlzuv --delete $LOCAL_DIR aicastell@${REMOTE_HOSTNAME}:$LOCAL_DIR"
+rsync -rlzuv --delete $LOCAL_DIR aicastell@${REMOTE_HOSTNAME}:$LOCAL_DIR
+RET=$?
+
+if [ $RET -ne 0 ]; then
+    echo "Synchronization failed. Check the error messages above."
+    exit 1
+fi
+
+echo "Synchronization completed successfully."
+exit 0
